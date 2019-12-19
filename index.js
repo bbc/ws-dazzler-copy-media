@@ -18,7 +18,7 @@ try {
 }
 const assetCredentials = new aws.ChainableTemporaryCredentials({
   params: {
-    RoleArn: config.RoleArn
+    RoleArn: process.env.ROLE_ARN
   }
 });
 appwS3 = new aws.S3({ credentials: assetCredentials });
