@@ -41,6 +41,7 @@ Resources:
             - OutputBucketMap
             - !Ref Environment
           APPW_ROLE: !Ref APPWRole
+          MASTER_BRAND: !Ref MasterBrand
       Handler: index.handler
       Role: !GetAtt 
         - LambdaRole
@@ -114,6 +115,9 @@ Parameters:
     Type: String
   APPWRole:
     Default: 'arn:aws:iam::746161738563:role/client-access-appw-cd-live'
+    Type: String
+  MasterBrand:
+    Default: 'bbc_marathi_tv'
     Type: String
   RoleArn:
     Default: 'aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT'
