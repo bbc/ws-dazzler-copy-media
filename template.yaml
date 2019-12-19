@@ -1,10 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: 'AWS::Serverless-2016-10-31'
-Description: >-
-  An Amazon SNS trigger that logs the message pushed to the SNS topic.
+Transform: AWS::Serverless-2016-10-31
+Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
 Resources:
   OutputBucket:
-    Type: 'AWS::S3::Bucket'
+    Type: AWS::S3::Bucket
     Properties:
       BucketName: !FindInMap 
         - OperationsMap
@@ -16,21 +15,25 @@ Resources:
       Bucket: !Ref OutputBucket
       PolicyDocument:
         Statement:
-          -
-            Action:
-              - "s3:PutObject"
-              - "s3:PutObjectAcl"
+          - Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
             Effect: Allow
-            Resource: !Ref MediaRole
+            Principal:
+              AWS: !Ref MediaRole
+            Resource:
+              Fn::Sub:
+                - arn:aws:s3:::${Bucket}/*
+                - Bucket:
+                    !Ref OutputBucket
   Lambda:
-    Type: 'AWS::Serverless::Function'
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: ws-dazzler-copy-media
       Handler: index.handler
       Runtime: nodejs8.10
-      InlineCode: 'exports.handler = function(event,context){}'
-      Description: >-
-        An Amazon SNS trigger that logs the message pushed to the SNS topic.
+      InlineCode: exports.handler = function(event,context){}
+      Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
       Events:
@@ -40,12 +43,9 @@ Resources:
             Topic: !Ref MediaSyndicationTopic
       Policies:
         - S3CrudPolicy:
-            BucketName: !FindInMap 
-              - OperationsMap
-              - OutputBucketMap
-              - !Ref Environment
+            BucketName: !Ref OutputBucket
         - Statement:
-            - Action: 'sts:AssumeRole'
+            - Action: sts:AssumeRole
               Effect: Allow
               Resource: !Ref APPWRole
       Environment:
@@ -56,12 +56,9 @@ Resources:
           APPW_KEY_PREFIX: !Ref APPWKeyPrefix
           APPW_ENV: !Ref Environment
           MASTER_BRAND: !Ref MasterBrand
-          OUTPUT_BUCKET: !FindInMap 
-            - OperationsMap
-            - OutputBucketMap
-            - !Ref Environment
+          OUTPUT_BUCKET: !Ref OutputBucket
   AliasForLambda:
-    Type: 'AWS::Lambda::Alias'
+    Type: AWS::Lambda::Alias
     Properties:
       FunctionVersion: $LATEST
       FunctionName: !Ref Lambda
@@ -76,15 +73,14 @@ Parameters:
       - live
       - test
   LambdaTimeout:
-    Default: '30'
+    Default: 30
     Type: Number
-    Description: >-
-      The function execution time (in seconds) after which Lambda terminates the
-      function. 
+    Description: 'The function execution time (in seconds) after which Lambda terminates
+      the function. '
   LambdaMemorySize:
-    Default: '128'
-    Type: Number 
-    Description: 'The amount of memory, in MB, that is allocated to your Lambda function.'
+    Default: 128
+    Type: Number
+    Description: The amount of memory, in MB, that is allocated to your Lambda function.
   MediaSyndicationTopic:
     Default: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
     Type: String
@@ -102,7 +98,7 @@ Parameters:
     Default: bbc_marathi_tv
   MediaRole:
     Type: String
-    Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT 
+    Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
 Mappings:
   OperationsMap:
     OutputBucketMap:
