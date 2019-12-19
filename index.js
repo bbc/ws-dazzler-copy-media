@@ -50,7 +50,7 @@ exports.handler = async (event, context) => {
       if (masterBrand === wantedMasterBrand) {
         console.log("right masterbrand");
         try {
-          transport(sns.event_name, sns.uri, pid);
+          await transport(sns.event_name, sns.uri, pid);
         } catch (error) {
           console.log(error);
         }
