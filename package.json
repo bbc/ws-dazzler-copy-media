@@ -6,7 +6,6 @@
   "scripts": {
     "lint": "eslint *.js",
     "test": "jest",
-    "pretest": "npm run lint",
     "prepack": "npm test",
     "postpack": "tarball=$(npm list --depth 0|sed 's/@/-/g; s/ .*/.tgz/g; 1q'); tar -tf $tarball | sed 's/^package\\///' | zip -@r package; rm $tarball"
   },

@@ -25,6 +25,7 @@ const assetCredentials = new aws.ChainableTemporaryCredentials({
 appwS3 = new aws.S3({ credentials: assetCredentials });
 
 exports.handler = async (event, context) => {
+  console.log("HIT");
   console.log("Received event:", JSON.stringify(event, null, 2));
   const message = event.Records[0].Sns.Message;
   const sns = JSON.parse(message);
@@ -73,7 +74,7 @@ exports.handler = async (event, context) => {
     }
     return message;
   } else {
-    console.log("Profile ID was not 'pv10'", message);
+    console.log("Profile ID was not pv10", message);
   }
 };
 const transport = async (operation, s3Location, pid, item) => {
