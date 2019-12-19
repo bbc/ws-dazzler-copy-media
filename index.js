@@ -1,6 +1,6 @@
 console.log("Loading function");
 const aws = require("aws-sdk");
-const appw = require("./appw.js");
+const appw = require("./appw");
 const wantedMasterBrand = process.env.MASTER_BRAND;
 const destinationBucket = process.env.OUTPUT_BUCKET;
 const envVariables = {
