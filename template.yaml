@@ -1,11 +1,8 @@
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: >-
+  An Amazon SNS trigger that logs the message pushed to the SNS topic.
 Resources:
-  AliasForLambda:
-    Type: 'AWS::Lambda::Alias'
-    Properties:
-      FunctionVersion: $LATEST
-      FunctionName: !Ref Lambda
-      Name: !Ref Environment
   OutputBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -13,137 +10,99 @@ Resources:
         - OperationsMap
         - OutputBucketMap
         - !Ref Environment
-  LambdaAppwTopicPermission:
-    Type: 'AWS::Lambda::Permission'
+  OutputBucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      Action: 'lambda:invokeFunction'
-      Principal: sns.amazonaws.com
-      FunctionName: !Ref Lambda
-      SourceArn: !Ref MediaSyndicationTopic
+      Bucket: !Ref OutputBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:PutObject"
+              - "s3:PutObjectAcl"
+            Effect: Allow
+            Resource: !Ref MediaRole
   Lambda:
-    Type: 'AWS::Lambda::Function'
+    Type: 'AWS::Serverless::Function'
     Properties:
-      Code:
-        ZipFile: 'exports.handler = function(event,context){}'
-      Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
-      Tags:
-        - Value: SAM
-          Key: 'lambda:createdBy'
+      FunctionName: ws-dazzler-copy-media
+      Handler: index.handler
+      Runtime: nodejs8.10
+      InlineCode: 'exports.handler = function(event,context){}'
+      Description: >-
+        An Amazon SNS trigger that logs the message pushed to the SNS topic.
       MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      Events:
+        AppwTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref MediaSyndicationTopic
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !FindInMap 
+              - OperationsMap
+              - OutputBucketMap
+              - !Ref Environment
+        - Statement:
+            - Action: 'sts:AssumeRole'
+              Effect: Allow
+              Resource: !Ref APPWRole
       Environment:
         Variables:
-          ROLE_ARN: !Ref RoleArn
-          APPW_ENV: !Ref Environment
+          APPW_ROLE: !Ref APPWRole
+          MEDIA_ROLE: !Ref MediaRole
           APPW_BUCKET: !Ref APPWBucket
           APPW_KEY_PREFIX: !Ref APPWKeyPrefix
+          APPW_ENV: !Ref Environment
+          MASTER_BRAND: !Ref MasterBrand
           OUTPUT_BUCKET: !FindInMap 
             - OperationsMap
             - OutputBucketMap
             - !Ref Environment
-          APPW_ROLE: !Ref APPWRole
-          MASTER_BRAND: !Ref MasterBrand
-      Handler: index.handler
-      Role: !GetAtt 
-        - LambdaRole
-        - Arn
-      Timeout: !Ref LambdaTimeout
-      Runtime: nodejs8.10
-      FunctionName: ws-dazzler-copy-media
-  LambdaAppwTopic:
-    Type: 'AWS::SNS::Subscription'
+  AliasForLambda:
+    Type: 'AWS::Lambda::Alias'
     Properties:
-      Endpoint: !GetAtt 
-        - Lambda
-        - Arn
-      Protocol: lambda
-      TopicArn: !Ref MediaSyndicationTopic
-  LambdaRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: LambdaRolePolicy0
-          PolicyDocument:
-            Statement:
-              - Action:
-                  - 's3:GetObject'
-                  - 's3:ListBucket'
-                  - 's3:GetBucketLocation'
-                  - 's3:GetObjectVersion'
-                  - 's3:PutObject'
-                  - 's3:PutObjectAcl'
-                  - 's3:GetLifecycleConfiguration'
-                  - 's3:PutLifecycleConfiguration'
-                  - 's3:DeleteObject'
-                Resource:
-                  - !Sub 
-                    - 'arn:${AWS::Partition}:s3:::${bucketName}'
-                    - bucketName: !FindInMap 
-                        - OperationsMap
-                        - OutputBucketMap
-                        - !Ref Environment
-                  - !Sub 
-                    - 'arn:${AWS::Partition}:s3:::${bucketName}/*'
-                    - bucketName: !FindInMap 
-                        - OperationsMap
-                        - OutputBucketMap
-                        - !Ref Environment
-                Effect: Allow
-        - PolicyName: LambdaRolePolicy1
-          PolicyDocument:
-            Statement:
-              - Action: 'sts:AssumeRole'
-                Resource: !Ref APPWRole
-                Effect: Allow
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Action:
-              - 'sts:AssumeRole'
-            Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
+      FunctionVersion: $LATEST
+      FunctionName: !Ref Lambda
+      Name: !Ref Environment
 Parameters:
-  APPWKeyPrefix:
-    Default: programme_availability_cd/live
+  Environment:
+    Default: test
     Type: String
-  APPWBucket:
-    Default: public-bf7ec4ef6829c416
-    Type: String
-  APPWRole:
-    Default: 'arn:aws:iam::746161738563:role/client-access-appw-cd-live'
-    Type: String
-  MasterBrand:
-    Default: 'bbc_marathi_tv'
-    Type: String
-  RoleArn:
-    Default: 'aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT'
-    Type: String
+    Description: The deployment environment
+    ConstraintDescription: must be test or live
+    AllowedValues:
+      - live
+      - test
   LambdaTimeout:
     Default: '30'
     Type: Number
     Description: >-
       The function execution time (in seconds) after which Lambda terminates the
       function. 
-  Environment:
-    Default: test
-    ConstraintDescription: must be test or live
-    Type: String
-    Description: The deployment environment
-    AllowedValues:
-      - live
-      - test
   LambdaMemorySize:
     Default: '128'
-    Type: Number
+    Type: Number 
     Description: 'The amount of memory, in MB, that is allocated to your Lambda function.'
   MediaSyndicationTopic:
-    Default: >-
-      arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+    Default: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
     Type: String
+  APPWRole:
+    Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
+    Type: String
+  APPWBucket:
+    Default: public-bf7ec4ef6829c416
+    Type: String
+  APPWKeyPrefix:
+    Default: programme_availability_cd/live
+    Type: String
+  MasterBrand:
+    Type: String
+    Default: bbc_marathi_tv
+  MediaRole:
+    Type: String
+    Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT 
 Mappings:
   OperationsMap:
     OutputBucketMap:
