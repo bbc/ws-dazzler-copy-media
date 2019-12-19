@@ -1,10 +1,8 @@
 console.log("Loading function");
 const aws = require("aws-sdk");
-const s3 = new aws.S3({ apiVersion: "2006-03-01" });
 const appw = require("./appw-merge-isite.js");
 const mBrand = process.env.MASTER_BRAND;
 const destinationBucket = process.env.OUTPUT_BUCKET;
-
 const envVariables = {
   prefix: process.env.APPW_KEY_PREFIX,
   bucket: process.env.APPW_BUCKET,
@@ -21,15 +19,13 @@ const assetCredentials = new aws.ChainableTemporaryCredentials({
     RoleArn: process.env.ROLE_ARN
   }
 });
-appwS3 = new aws.S3({ credentials: assetCredentials });
-
+let msS3 = new aws.S3({ credentials: assetCredentials });
 exports.handler = async (event, context) => {
   console.log("HIT");
   console.log("Received event:", JSON.stringify(event, null, 2));
   const message = event.Records[0].Sns.Message;
   const sns = JSON.parse(message);
   const profile_id = sns.profile_id;
-
   if (profile_id === "pips-map_id-av_pv10_pa4") {
     const content_version_id = sns.content_version_id;
     const pid = content_version_id.split("pips-pid-")[1];
@@ -39,7 +35,6 @@ exports.handler = async (event, context) => {
     const item = s3Location.includes(".com")
       ? s3Location.split(".com")[1]
       : s3Location.replace("s3:/", "");
-
     try {
       let masterBrand = "";
       const response = await appw.get("version", pid);
@@ -50,7 +45,7 @@ exports.handler = async (event, context) => {
         const clipPid = response.pips.version.version_of.link.pid;
         const clip = await appw.get("clip", clipPid);
         masterBrand = clip.pips.master_brand_for.master_brand.mid;
-        console.log("Master brand is ", masterBrand);
+        console.log("Clip Master brand is", masterBrand);
       } else if (
         response.pips.version.version_of.link.rel.split("pips-meta:")[1] ===
         "episode"
@@ -58,10 +53,10 @@ exports.handler = async (event, context) => {
         const episodePid = response.pips.version.version_of.link.pid;
         const episode = await appw.get("episode", episodePid);
         masterBrand = episode.pips.master_brand_for.master_brand.mid;
-        console.log("Master brand is ", masterBrand);
+        console.log("Episode Master brand is ", masterBrand);
       }
-
       if (masterBrand === mBrand) {
+        console.log("right masterbrand");
         try {
           transport(operation, s3Location, pid, item);
         } catch (error) {
@@ -77,6 +72,7 @@ exports.handler = async (event, context) => {
   }
 };
 const transport = async (operation, s3Location, pid, item) => {
+  console.log("transport", operation, s3Location, pid, item);
   s3Location = s3Location.replace("s3:/", "");
   switch (operation) {
     case "MODIFY":
@@ -87,8 +83,9 @@ const transport = async (operation, s3Location, pid, item) => {
         Key: `${pid}.mp4`,
         ACL: "bucket-owner-full-control"
       };
+      console.log("Params are", params);
       try {
-        let s3Response = await s3.copyObject(params).promise();
+        let s3Response = await msS3.copyObject(params).promise();
         console.log("Inserted");
       } catch (e) {
         console.log("error ", e);
@@ -96,7 +93,7 @@ const transport = async (operation, s3Location, pid, item) => {
       break;
     case "REMOVE":
       var params = {
-        Bucket: destinationBucket,
+        Bucket: process.env.OUTPUT_BUCKET,
         Key: `${pid}.mp4`
       };
       try {
