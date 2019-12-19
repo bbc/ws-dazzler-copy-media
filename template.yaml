@@ -50,7 +50,7 @@ Resources:
         - Statement:
             - Action: sts:AssumeRole
               Effect: Allow
-              Resource: !Ref APPWRole
+              Resource: [ !Ref APPWRole, !Ref MediaRole ]
       Environment:
         Variables:
           APPW_ROLE: !Ref APPWRole
