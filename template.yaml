@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: >-
+  An Amazon SNS trigger that logs the message pushed to the SNS topic.
+Resources:
+  OutputBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !FindInMap 
+        - OperationsMap
+        - OutputBucketMap
+        - !Ref Environment
+  Lambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: ws-dazzler-copy-media
+      Handler: index.handler
+      Runtime: nodejs8.10
+      InlineCode: 'exports.handler = function(event,context){}'
+      Description: >-
+        An Amazon SNS trigger that logs the message pushed to the SNS topic.
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      Events:
+        AppwTopic:
+          Type: SNS
+          Properties:
+            Topic: !Ref MediaSyndicationTopic
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !FindInMap 
+              - OperationsMap
+              - OutputBucketMap
+              - !Ref Environment
+        - Statement:
+            - Action: 'sts:AssumeRole'
+              Effect: Allow
+              Resource: !Ref APPWRole
+      Environment:
+        Variables:
+          APPW_ROLE: !Ref APPWRole
+          APPW_BUCKET: !Ref APPWBucket
+          APPW_KEY_PREFIX: !Ref APPWKeyPrefix
+          APPW_ENV: !Ref Environment
+          OUTPUT_BUCKET: !FindInMap 
+            - OperationsMap
+            - OutputBucketMap
+            - !Ref Environment
+  AliasForLambda:
+    Type: 'AWS::Lambda::Alias'
+    Properties:
+      FunctionVersion: $LATEST
+      FunctionName: !Ref Lambda
+      Name: !Ref Environment
+Parameters:
+  Environment:
+    Default: test
+    Type: String
+    Description: The deployment environment
+    ConstraintDescription: must be test or live
+    AllowedValues:
+      - live
+      - test
+  LambdaTimeout:
+    Default: '30'
+    Type: Number
+    Description: >-
+      The function execution time (in seconds) after which Lambda terminates the
+      function. 
+  LambdaMemorySize:
+    Default: '128'
+    Type: Number 
+    Description: 'The amount of memory, in MB, that is allocated to your Lambda function.'
+  MediaSyndicationTopic:
+    Default: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+    Type: String
+  APPWRole:
+    Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
+    Type: String
+  APPWBucket:
+    Default: public-bf7ec4ef6829c416
+    Type: String
+  APPWKeyPrefix:
+    Default: programme_availability_cd/live
+    Type: String
+Mappings:
+  OperationsMap:
+    OutputBucketMap:
+      test: ws-dazzler-assets-test
+      live: ws-dazzler-assets
+
+
+
+
+
