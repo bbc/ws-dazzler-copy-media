@@ -2,7 +2,6 @@ console.log("Loading function");
 const aws = require("aws-sdk");
 const s3 = new aws.S3({ apiVersion: "2006-03-01" });
 const appw = require("./appw-merge-isite.js");
-const config = require("./config.json");
 const mBrand = process.env.MASTER_BRAND;
 const destinationBucket = process.env.OUTPUT_BUCKET;
 
