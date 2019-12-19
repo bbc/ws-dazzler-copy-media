@@ -37,10 +37,13 @@ Resources:
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
       Events:
-        AppwTopic:
+        MediaSyndication:
           Type: SNS
           Properties:
-            Topic: !Ref MediaSyndicationTopic
+            Topic: !FindInMap 
+              - OperationsMap
+              - MediaSyndicationTopicMap
+              - !Ref Environment
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref OutputBucket
@@ -81,9 +84,6 @@ Parameters:
     Default: 128
     Type: Number
     Description: The amount of memory, in MB, that is allocated to your Lambda function.
-  MediaSyndicationTopic:
-    Default: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
-    Type: String
   APPWRole:
     Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
     Type: String
@@ -104,3 +104,6 @@ Mappings:
     OutputBucketMap:
       test: ws-dazzler-assets-test
       live: ws-dazzler-assets
+    MediaSyndicationTopicMap:
+      test: arn:aws:sns:eu-west-1:576677253489:dummy-media-syndication-api-until-permssion-to-subscribe-available
+      live: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
