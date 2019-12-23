@@ -45,6 +45,8 @@ Resources:
               - MediaSyndicationTopicMap
               - !Ref Environment
       Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref InputBucket
         - S3CrudPolicy:
             BucketName: !Ref OutputBucket
         - Statement:
@@ -96,6 +98,9 @@ Parameters:
   MasterBrand:
     Type: String
     Default: bbc_marathi_tv
+  InputBucket:
+    Type: String
+    Default: livemodavdistributionresources-distributionbucket-182btg2y28f33
   MediaRole:
     Type: String
     Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
@@ -105,5 +110,5 @@ Mappings:
       test: ws-dazzler-assets-test
       live: ws-dazzler-assets
     MediaSyndicationTopicMap:
-      test: arn:aws:sns:eu-west-1:576677253489:dummy-media-syndication-api-until-permssion-to-subscribe-available
+      test: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
       live: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
