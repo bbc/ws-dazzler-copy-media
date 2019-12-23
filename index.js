@@ -19,7 +19,7 @@ const assetCredentials = new aws.ChainableTemporaryCredentials({
     RoleArn: process.env.MEDIA_ROLE
   }
 });
-let msS3 = new aws.S3({ credentials: assetCredentials });
+let msS3 = new aws.S3(/*{ credentials: assetCredentials }*/);
 
 exports.handler = async (event, context) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
