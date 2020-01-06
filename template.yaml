@@ -62,6 +62,7 @@ Resources:
           APPW_ENV: !Ref Environment
           MASTER_BRAND: !Ref MasterBrand
           OUTPUT_BUCKET: !Ref OutputBucket
+          PROFILE_ID: !Ref WantedProfileId
   AliasForLambda:
     Type: AWS::Lambda::Alias
     Properties:
@@ -104,6 +105,9 @@ Parameters:
   MediaRole:
     Type: String
     Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
+  WantedProfileId:
+    Type: String
+    Default: pips-map_id-av_pv13_pa4
 Mappings:
   OperationsMap:
     OutputBucketMap:
