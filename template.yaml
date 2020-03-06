@@ -31,7 +31,7 @@ Resources:
     Properties:
       FunctionName: ws-dazzler-copy-media
       Handler: index.handler
-      Runtime: nodejs8.10
+      Runtime: nodejs12.x
       InlineCode: exports.handler = function(event,context){}
       Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
       MemorySize: !Ref LambdaMemorySize
