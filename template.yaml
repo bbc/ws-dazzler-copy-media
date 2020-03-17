@@ -114,5 +114,5 @@ Mappings:
       test: ws-dazzler-assets-test
       live: ws-dazzler-assets
     MediaSyndicationTopicMap:
-      test: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+      test: arn:aws:sns:eu-west-1:576677253489:dummy-media-syndication-api-until-permssion-to-subscribe-available
       live: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
