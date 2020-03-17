@@ -98,7 +98,7 @@ Parameters:
     Type: String
   MasterBrand:
     Type: String
-    Default: bbc_marathi_tv
+    Default: bbc_hindi_tv,bbc_marathi_tv
   InputBucket:
     Type: String
     Default: livemodavdistributionresources-distributionbucket-182btg2y28f33

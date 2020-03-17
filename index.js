@@ -1,7 +1,7 @@
 console.log("Loading function");
 const aws = require("aws-sdk");
 const appw = require("./appw");
-const wantedMasterBrand = process.env.MASTER_BRAND;
+const wantedMasterBrands = process.env.MASTER_BRAND;
 const destinationBucket = process.env.OUTPUT_BUCKET;
 const envVariables = {
   prefix: process.env.APPW_KEY_PREFIX,
@@ -48,8 +48,8 @@ exports.handler = async (event, context) => {
         }
         default: // DO NOTHING
       }
-      if (masterBrand === wantedMasterBrand) {
-        console.log("right masterbrand");
+      if (wantedMasterBrands.includes(masterBrand)) {
+        console.log("wanted masterbrand");
         try {
           await transport(sns.event_name, sns.uri, pid);
         } catch (error) {
@@ -91,7 +91,7 @@ const transport = async (operation, s3Location, pid) => {
         Key: `${pid}.mp4`
       };
       try {
-        let s3Response = await s3.deleteObject(params).promise();
+        let s3Response = await msS3.deleteObject(params).promise();
         console.log("Removed");
       } catch (e) {
         console.log("error ", e);
