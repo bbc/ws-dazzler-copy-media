@@ -20,11 +20,24 @@ const assetCredentials = new aws.ChainableTemporaryCredentials({
   }
 });
 let msS3 = new aws.S3(/*{ credentials: assetCredentials }*/);
+const snsTest = new aws.SNS();
 
 exports.handler = async (event, context) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
   const wanted_profile_id = process.env.PROFILE_ID
   const message = event.Records[0].Sns.Message;
+  if(process.env.COPY_TO && process.env.COPY_TO.includes('aws')) {
+    try {
+      console.log('trying to foward to test');
+      await snsTest.publish({
+        Message: message,
+        TopicArn: process.env.COPY_TO
+      }).promise();
+      console.log('fowarded to test');
+    } catch(e) {
+      console.log(e);
+    }
+  }
   const sns = JSON.parse(message);
   const profile_id = sns.profile_id;
   if (profile_id === wanted_profile_id) {
