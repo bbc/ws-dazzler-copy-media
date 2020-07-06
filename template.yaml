@@ -44,6 +44,23 @@ Resources:
               - OperationsMap
               - MediaSyndicationTopicMap
               - !Ref Environment
+      VpcConfig:
+        SubnetIds:
+          - Fn::ImportValue:
+              !Sub "${CoreInfrastructureStackName}-PrivateSubnet0"
+          - Fn::ImportValue:
+              !Sub "${CoreInfrastructureStackName}-PrivateSubnet1"
+          - Fn::ImportValue:
+              !Sub "${CoreInfrastructureStackName}-PrivateSubnet2"
+        SecurityGroupIds:
+          - !ImportValue
+            'Fn::Join':
+              - '-'
+              -  - !FindInMap
+                   - OperationsMap
+                   - SecurityGroupStackMap
+                   - !Ref Environment
+                 - WsAppwMergeIsiteSgId
       Policies:
         - S3ReadPolicy:
             BucketName: !Ref InputBucket
@@ -81,6 +98,12 @@ Resources:
       FunctionName: !Ref Lambda
       Name: !Ref Environment
 Parameters:
+  CoreInfrastructureStackName:
+    Default: core-infrastructure
+    Type: String
+    Description: >-
+      Name of the AWS account's core-infrastructure stack. Used to import other
+      network parameters (vpc id, subnets etc.)
   Environment:
     Default: test
     Type: String
@@ -133,3 +156,6 @@ Mappings:
     ESHostMap:
       test: vpc-test-pws-es-01-ntq5eu3xhbkw56fc2yi4vt2ndm.eu-west-1.es.amazonaws.com
       live: vpc-live-pws-es-01-sharq3wijppafqfq2v3isa5ram.eu-west-1.es.amazonaws.com
+    SecurityGroupStackMap:
+      test: test-ws-partners-core-SecurityGroupStack-CIWZAD831WU2
+      live: live-ws-partners-core-SecurityGroupStack-SYT5JIU2MUSV

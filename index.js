@@ -97,11 +97,15 @@ exports.handler = async (event, context) => {
         const wantedProfileId = process.env.CLIP_PROFILE_ID
         if (profileId === wantedProfileId) {
           const clip = await appw.get('clip', link.pid)
-          const tag = await tagging.getTag(clip.pips.clip.pid);
-          const lang = tagging.tag2lang(tag);
-          console.log('lang', lang);
           masterBrand = clip.pips.master_brand_for.master_brand.mid
-          console.log(JSON.stringify(clip.pips))
+          if (masterBrand === 'bbc_webonly') {
+            const tag = await tagging.getTag(clip.pips.clip.pid)
+            if (tag) {
+              const lang = tagging.tag2lang(tag)
+              console.log('lang', lang)
+              masterBrand = `bbc_${lang}_tv`
+            }
+          }
           console.log('Clip Master brand is', masterBrand)
         } else {
           console.log('Profile ID was not ' + wantedProfileId, message)
