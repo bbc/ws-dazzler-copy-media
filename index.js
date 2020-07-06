@@ -4,6 +4,7 @@ const { Client } = require('@elastic/elasticsearch')
 const appw = require('./appw')
 const tagging = require('./tagging')
 const elasticSearch = require('./elasticSearch')
+const mediaSyndication = require('./mediaSyndication')
 
 const wantedMasterBrands = process.env.MASTER_BRAND
 const destinationBucket = process.env.OUTPUT_BUCKET
@@ -31,6 +32,13 @@ const assetCredentials = new aws.ChainableTemporaryCredentials({
 })
 */
 const msS3 = new aws.S3(/* { credentials: assetCredentials } */)
+
+if (process.env.MS_API_KEY) {
+  mediaSyndication.settings({
+    host: 'media-syndication.api.bbci.co.uk',
+    api_key: process.env.MS_API_KEY
+  })
+}
 
 const transport = async (operation, s3Location, pid) => {
   console.log('transport', operation, s3Location, pid)
@@ -69,6 +77,24 @@ const transport = async (operation, s3Location, pid) => {
 }
 
 /*
+{"content_version_id":"pips-pid-p08jyzsp","mediaset":"ws-partner-download","media_assets":[{"drm":"none","media_asset_id":"pips-pid-p08jz13q","sequence_stamp":1594024839001000,"profile_id":"pips-map_id-av_pv10_pa4","uri":"s3://livemodavdistributionresources-distributionbucket-182btg2y28f33/av_pv10_pa4/modav/bUnknown-490d35a9-4eca-4fa2-b781-754229aab2a8_p08jyzsp_cUnknown_1594024535442.mp4","last_updated":"2020-07-06T08:40:49.553Z"}]}
+*/
+const backfill = async (pids, profileId) => {
+  const promises = []
+  pids.forEach((pid) => {
+    promises.push(mediaSyndication.get(pid))
+  })
+  const docs = await Promise.all(promises)
+  const morePromises = []
+  docs.forEach((doc) => {
+    const pid = doc.content_version_id.replace('pips-pid-', '')
+    const asset = doc.media_assets.find((ma) => ma.profile_id === profileId)
+    morePromises.push(transport('INSERT', asset.uri, pid))
+  })
+  return Promise.all(morePromises)
+}
+
+/*
 {
   "content_version_id":"pips-pid-p08jxw47",
   "drm":"none",
@@ -86,6 +112,9 @@ exports.handler = async (event, context) => {
   const message = event.Records[0].Sns.Message
   const sns = JSON.parse(message)
   const profileId = sns.profile_id
+  if (sns.backfill) {
+    return backfill(sns.pids, sns.profile_id)
+  }
   const contentVersionId = sns.content_version_id
   const pid = contentVersionId.split('pips-pid-')[1]
   try {

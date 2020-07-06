@@ -91,6 +91,7 @@ Resources:
             - OperationsMap
             - ESHostMap
             - !Ref Environment
+          MS_API_KEY: !Ref MediaSyndicationApiKey
   AliasForLambda:
     Type: AWS::Lambda::Alias
     Properties:
@@ -145,6 +146,9 @@ Parameters:
   WantedClipProfileId:
     Type: String
     Default: pips-map_id-av_pv10_pa4
+  MediaSyndicationApiKey:
+    Type: String
+    Description: media syndication API Key
 Mappings:
   OperationsMap:
     OutputBucketMap:
