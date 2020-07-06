@@ -1,10 +1,6 @@
 /* eslint-disable no-undef */
 const uut = require('./index')
 
-test('handler', async () => {
-  const r = await uut.handler(event, context)
-  expect(r).toBe(undefined)
-})
 var event = {
   Records: [
     {
@@ -46,3 +42,8 @@ var context = {
   invokedFunctionArn:
     'arn:aws:lambda:eu-west-1:205979497597:function:MediaSyndicationApiNotificationsHandlerForPartners'
 }
+
+test('handler', async () => {
+  const r = await uut.handler(event, context)
+  expect(r).toBe(undefined)
+})

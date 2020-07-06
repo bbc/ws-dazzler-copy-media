@@ -1,6 +1,10 @@
 console.log('Loading function')
 const aws = require('aws-sdk')
+const { Client } = require('@elastic/elasticsearch')
 const appw = require('./appw')
+const tagging = require('./tagging')
+const elasticSearch = require('./elasticSearch')
+
 const wantedMasterBrands = process.env.MASTER_BRAND
 const destinationBucket = process.env.OUTPUT_BUCKET
 const envVariables = {
@@ -11,9 +15,14 @@ const envVariables = {
 }
 try {
   appw.settings(envVariables)
+  if (process.env.ES_HOST) {
+    elasticSearch.settings(new Client({ node: `https://${process.env.ES_HOST}` }))
+  }
+  tagging.settings({ elasticSearch })
 } catch (error) {
   console.log(error)
 }
+
 /*
 const assetCredentials = new aws.ChainableTemporaryCredentials({
   params: {
@@ -60,7 +69,6 @@ const transport = async (operation, s3Location, pid) => {
 }
 
 /*
-2020-07-05T15:29:40.969Z d6908d0f-128c-40dd-ba49-c67fa675849f INFO Profile ID was not pips-map_id-av_pv13_pa4 
 {
   "content_version_id":"pips-pid-p08jxw47",
   "drm":"none",
@@ -86,9 +94,12 @@ exports.handler = async (event, context) => {
     let masterBrand = ''
     switch (link.rel.split('pips-meta:')[1]) {
       case 'clip': {
-        const wantedProfileId = 'pips-map_id-av_pv10_pa4'
+        const wantedProfileId = process.env.CLIP_PROFILE_ID
         if (profileId === wantedProfileId) {
           const clip = await appw.get('clip', link.pid)
+          const tag = await tagging.getTag(clip.pips.clip.pid);
+          const lang = tagging.tag2lang(tag);
+          console.log('lang', lang);
           masterBrand = clip.pips.master_brand_for.master_brand.mid
           console.log(JSON.stringify(clip.pips))
           console.log('Clip Master brand is', masterBrand)
@@ -98,7 +109,7 @@ exports.handler = async (event, context) => {
       }
         break
       case 'episode': {
-        const wantedProfileId = process.env.PROFILE_ID
+        const wantedProfileId = process.env.EPISODE_PROFILE_ID
         if (profileId === wantedProfileId) {
           const episode = await appw.get('episode', link.pid)
           masterBrand = episode.pips.master_brand_for.master_brand.mid

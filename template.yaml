@@ -53,6 +53,11 @@ Resources:
             - Action: sts:AssumeRole
               Effect: Allow
               Resource: [ !Ref APPWRole, !Ref MediaRole ]
+        - ElasticsearchHttpPostPolicy:
+            DomainName: !FindInMap
+              - OperationsMap
+              - ESHostMap
+              - !Ref Environment
       Environment:
         Variables:
           APPW_ROLE: !Ref APPWRole
@@ -62,8 +67,13 @@ Resources:
           APPW_ENV: !Ref Environment
           MASTER_BRAND: !Ref MasterBrand
           OUTPUT_BUCKET: !Ref OutputBucket
-          PROFILE_ID: !Ref WantedProfileId
+          EPISODE_PROFILE_ID: !Ref WantedEpisodeProfileId
+          CLIP_PROFILE_ID: !Ref WantedClipProfileId
           COPY_TO: ""
+          ES_HOST: !FindInMap
+            - OperationsMap
+            - ESHostMap
+            - !Ref Environment
   AliasForLambda:
     Type: AWS::Lambda::Alias
     Properties:
@@ -106,9 +116,12 @@ Parameters:
   MediaRole:
     Type: String
     Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
-  WantedProfileId:
+  WantedEpisodeProfileId:
     Type: String
     Default: pips-map_id-av_pv13_pa4
+  WantedClipProfileId:
+    Type: String
+    Default: pips-map_id-av_pv10_pa4
 Mappings:
   OperationsMap:
     OutputBucketMap:
@@ -117,3 +130,6 @@ Mappings:
     MediaSyndicationTopicMap:
       test: arn:aws:sns:eu-west-1:576677253489:test-ms-api
       live: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+    ESHostMap:
+      test: vpc-test-pws-es-01-ntq5eu3xhbkw56fc2yi4vt2ndm.eu-west-1.es.amazonaws.com
+      live: vpc-live-pws-es-01-sharq3wijppafqfq2v3isa5ram.eu-west-1.es.amazonaws.com
