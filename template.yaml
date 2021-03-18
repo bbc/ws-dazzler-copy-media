@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
 Resources:
+  requestQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      VisibilityTimeout: !Ref LambdaTimeout
   OutputBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -44,6 +48,11 @@ Resources:
               - OperationsMap
               - MediaSyndicationTopicMap
               - !Ref Environment
+        requests:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt requestQueue.Arn
+            BatchSize: 1
       VpcConfig:
         SubnetIds:
           - Fn::ImportValue:
@@ -82,7 +91,7 @@ Resources:
           APPW_BUCKET: !Ref APPWBucket
           APPW_KEY_PREFIX: !Ref APPWKeyPrefix
           APPW_ENV: !Ref Environment
-          MASTER_BRAND: !Ref MasterBrand
+          DDB_TABLE: !Ref DynamoDbTable
           OUTPUT_BUCKET: !Ref OutputBucket
           EPISODE_PROFILE_ID: !Ref WantedEpisodeProfileId
           CLIP_PROFILE_ID: !Ref WantedClipProfileId
@@ -131,9 +140,9 @@ Parameters:
   APPWKeyPrefix:
     Default: programme_availability_cd/live
     Type: String
-  MasterBrand:
+  DynamoDbTable:
     Type: String
-    Default: bbc_hindi_tv,bbc_marathi_tv
+    Default: dazzler-test
   InputBucket:
     Type: String
     Default: livemodavdistributionresources-distributionbucket-182btg2y28f33

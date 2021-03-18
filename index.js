@@ -1,12 +1,12 @@
 console.log('Loading function')
-const aws = require('aws-sdk')
+const AWS = require('aws-sdk')
 const { Client } = require('@elastic/elasticsearch')
 const appw = require('./appw')
 const tagging = require('./tagging')
 const elasticSearch = require('./elasticSearch')
 const mediaSyndication = require('./mediaSyndication')
 
-const wantedMasterBrands = process.env.MASTER_BRAND
+const configTable = process.env.DDB_TABLE
 const destinationBucket = process.env.OUTPUT_BUCKET
 const envVariables = {
   prefix: process.env.APPW_KEY_PREFIX,
@@ -25,13 +25,14 @@ try {
 }
 
 /*
-const assetCredentials = new aws.ChainableTemporaryCredentials({
+const assetCredentials = new AWS.ChainableTemporaryCredentials({
   params: {
     RoleArn: process.env.MEDIA_ROLE
   }
 })
 */
-const msS3 = new aws.S3(/* { credentials: assetCredentials } */)
+const msS3 = new AWS.S3(/* { credentials: assetCredentials } */)
+const ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
 
 if (process.env.MS_API_KEY) {
   mediaSyndication.settings({
@@ -109,7 +110,26 @@ const backfill = async (pids, profileId) => {
 
 exports.handler = async (event, context) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
-  const message = event.Records[0].Sns.Message
+  let message;
+  const m = event.Records[0];
+  let eventSource;
+  if(m.eventSource) {
+    eventSource = m.eventSource;
+  } else if (m.EventSource) {
+    eventSource = m.EventSource;
+  }
+  switch(eventSource) {
+    case 'aws:sns': 
+      message = m.Sns.Message;
+      break;
+    case 'aws:sqs':
+      message = m.body;
+      break;
+    default:
+      message = 'unknown';
+  }
+  console.log(message);
+  if(message == 'unknown') return undefined;
   const sns = JSON.parse(message)
   const profileId = sns.profile_id
   if (sns.backfill) {
@@ -154,6 +174,9 @@ exports.handler = async (event, context) => {
         break
       default: // DO NOTHING
     }
+    const t = await ddb.scan({ TableName: configTable}).promise();
+    const wantedMasterBrands = t.Items.map(item => item.mid.S);
+    console.log('wantedMasterBrands', wantedMasterBrands);
     if (wantedMasterBrands.includes(masterBrand)) {
       console.log('wanted masterbrand')
       try {
@@ -167,3 +190,4 @@ exports.handler = async (event, context) => {
   }
   return undefined
 }
+
