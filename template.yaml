@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
+Description: copy mp4 files between buckets when they become available
 Resources:
   OutputTopic:
     Type: AWS::SNS::Topic
@@ -102,6 +102,8 @@ Resources:
               - OperationsMap
               - ESHostMap
               - !Ref Environment
+        - DynamoDBReadPolicy:
+            TableName: !Ref DynamoDbTable
       Environment:
         Variables:
           APPW_ROLE: !Ref APPWRole
