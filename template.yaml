@@ -1,18 +1,45 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
 Resources:
-  requestQueue:
-    Type: AWS::SQS::Queue
-    Properties: 
-      VisibilityTimeout: !Ref LambdaTimeout
+  OutputTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !FindInMap
+        - OperationsMap
+        - OutputTopicMap
+        - !Ref Environment
+  OutputTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: sns:Publish
+            Resource: !Ref OutputTopic
+            Condition:
+              ArnLike:
+                aws:SourceArn: !GetAtt OutputBucket.Arn
+      Topics:
+        - !Ref OutputTopic
   OutputBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !FindInMap 
+      BucketName: !FindInMap
         - OperationsMap
         - OutputBucketMap
         - !Ref Environment
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:Put
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: schedule.json
+            Topic: !Ref OutputTopic
   OutputBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -28,8 +55,7 @@ Resources:
             Resource:
               Fn::Sub:
                 - arn:aws:s3:::${Bucket}/*
-                - Bucket:
-                    !Ref OutputBucket
+                - Bucket: !Ref OutputBucket
   Lambda:
     Type: AWS::Serverless::Function
     Properties:
@@ -44,32 +70,24 @@ Resources:
         MediaSyndication:
           Type: SNS
           Properties:
-            Topic: !FindInMap 
+            Topic: !FindInMap
               - OperationsMap
               - MediaSyndicationTopicMap
               - !Ref Environment
-        requests:
-          Type: SQS
-          Properties:
-            Queue: !GetAtt requestQueue.Arn
-            BatchSize: 1
       VpcConfig:
         SubnetIds:
-          - Fn::ImportValue:
-              !Sub "${CoreInfrastructureStackName}-PrivateSubnet0"
-          - Fn::ImportValue:
-              !Sub "${CoreInfrastructureStackName}-PrivateSubnet1"
-          - Fn::ImportValue:
-              !Sub "${CoreInfrastructureStackName}-PrivateSubnet2"
+          - Fn::ImportValue: !Sub "${CoreInfrastructureStackName}-PrivateSubnet0"
+          - Fn::ImportValue: !Sub "${CoreInfrastructureStackName}-PrivateSubnet1"
+          - Fn::ImportValue: !Sub "${CoreInfrastructureStackName}-PrivateSubnet2"
         SecurityGroupIds:
           - !ImportValue
-            'Fn::Join':
-              - '-'
-              -  - !FindInMap
-                   - OperationsMap
-                   - SecurityGroupStackMap
-                   - !Ref Environment
-                 - WsAppwMergeIsiteSgId
+            "Fn::Join":
+              - "-"
+              - - !FindInMap
+                  - OperationsMap
+                  - SecurityGroupStackMap
+                  - !Ref Environment
+                - WsAppwMergeIsiteSgId
       Policies:
         - S3ReadPolicy:
             BucketName: !Ref InputBucket
@@ -78,7 +96,7 @@ Resources:
         - Statement:
             - Action: sts:AssumeRole
               Effect: Allow
-              Resource: [ !Ref APPWRole, !Ref MediaRole ]
+              Resource: [!Ref APPWRole, !Ref MediaRole]
         - ElasticsearchHttpPostPolicy:
             DomainName: !FindInMap
               - OperationsMap
@@ -125,8 +143,9 @@ Parameters:
   LambdaTimeout:
     Default: 30
     Type: Number
-    Description: 'The function execution time (in seconds) after which Lambda terminates
-      the function. '
+    Description:
+      "The function execution time (in seconds) after which Lambda terminates
+      the function. "
   LambdaMemorySize:
     Default: 128
     Type: Number
@@ -172,3 +191,6 @@ Mappings:
     SecurityGroupStackMap:
       test: test-ws-partners-core-SecurityGroupStack-CIWZAD831WU2
       live: live-ws-partners-core-SecurityGroupStack-SYT5JIU2MUSV
+    OutputTopicMap:
+      test: test-ws-dazzler-schedule-save
+      live: live-ws-dazzler-schedule-save
