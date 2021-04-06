@@ -47,18 +47,30 @@ const transport = async (operation, s3Location, pid) => {
   switch (operation) {
     case 'MODIFY':
     case 'INSERT':
-      var params = {
-        CopySource: s3Location,
-        Bucket: destinationBucket,
-        Key: `${pid}.mp4`,
-        ACL: 'bucket-owner-full-control'
-      }
-      console.log('Params are', params)
-      try {
-        await msS3.copyObject(params).promise()
-        console.log('Inserted')
-      } catch (e) {
-        console.log('error ', e)
+      {
+        const key = `${pid}.mp4`
+        msS3.headObject({ Bucket: destinationBucket, Key: key },
+          async function (err, data) {
+            if (err) {
+              console.log('file does not exist, copying', key)
+              var params = {
+                CopySource: s3Location,
+                Bucket: destinationBucket,
+                Key: key,
+                ACL: 'bucket-owner-full-control'
+              }
+              try {
+                await msS3.copyObject(params).promise()
+                console.log('copied', key)
+              } catch (e) {
+                console.log('error copying', key)
+                console.log('error ', e)
+              }
+            } else {
+              console.log('file exists, not overwriting', key)
+              console.log(data) // successful response
+            }
+          })
       }
       break
     case 'REMOVE':
