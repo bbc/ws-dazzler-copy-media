@@ -44,40 +44,37 @@ if (process.env.MS_API_KEY) {
 const transport = async (operation, s3Location, pid) => {
   console.log('transport', operation, s3Location, pid)
   s3Location = s3Location.replace('s3:/', '')
+  const key = `${pid}.mp4`
   switch (operation) {
     case 'MODIFY':
     case 'INSERT':
-      {
-        const key = `${pid}.mp4`
-        msS3.headObject({ Bucket: destinationBucket, Key: key },
-          async function (err, data) {
-            if (err) {
-              console.log('file does not exist, copying', key)
-              var params = {
-                CopySource: s3Location,
-                Bucket: destinationBucket,
-                Key: key,
-                ACL: 'bucket-owner-full-control'
-              }
-              try {
-                await msS3.copyObject(params).promise()
-                console.log('copied', key)
-              } catch (e) {
-                console.log('error copying', key)
-                console.log('error ', e)
-              }
-            } else {
-              console.log('file exists, not overwriting', key)
-              console.log(data) // successful response
-            }
-          })
+      try {
+        const data = await msS3.headObject({ Bucket: destinationBucket, Key: key }).promise()
+        console.log('file exists, not overwriting', key)
+        console.log(data) // successful response
+      } catch (e) {
+        console.log('file does not exist, copying', key)
+        console.log(e)
+        var params = {
+          CopySource: s3Location,
+          Bucket: destinationBucket,
+          Key: key,
+          ACL: 'bucket-owner-full-control'
+        }
+        try {
+          await msS3.copyObject(params).promise()
+          console.log('copied', key)
+        } catch (e) {
+          console.log('error copying', key)
+          console.log('error ', e)
+        }
       }
       break
     case 'REMOVE':
       try {
         await msS3.deleteObject({
           Bucket: process.env.OUTPUT_BUCKET,
-          Key: `${pid}.mp4`
+          Key: key
         }).promise()
         console.log('Removed')
       } catch (e) {
@@ -140,8 +137,10 @@ exports.handler = async (event, context) => {
     default:
       message = 'unknown'
   }
-  console.log(message)
-  if (message == 'unknown') return undefined
+  if (message === 'unknown') {
+    console.log('unknown', event)
+    return undefined
+  }
   const sns = JSON.parse(message)
   const profileId = sns.profile_id
   if (sns.backfill) {
