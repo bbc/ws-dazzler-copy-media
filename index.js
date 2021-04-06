@@ -32,7 +32,7 @@ const assetCredentials = new AWS.ChainableTemporaryCredentials({
 })
 */
 const msS3 = new AWS.S3(/* { credentials: assetCredentials } */)
-const ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
+const ddb = new AWS.DynamoDB({ apiVersion: '2012-08-10' })
 
 if (process.env.MS_API_KEY) {
   mediaSyndication.settings({
@@ -110,26 +110,26 @@ const backfill = async (pids, profileId) => {
 
 exports.handler = async (event, context) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
-  let message;
-  const m = event.Records[0];
-  let eventSource;
-  if(m.eventSource) {
-    eventSource = m.eventSource;
+  let message
+  const m = event.Records[0]
+  let eventSource
+  if (m.eventSource) {
+    eventSource = m.eventSource
   } else if (m.EventSource) {
-    eventSource = m.EventSource;
+    eventSource = m.EventSource
   }
-  switch(eventSource) {
-    case 'aws:sns': 
-      message = m.Sns.Message;
-      break;
+  switch (eventSource) {
+    case 'aws:sns':
+      message = m.Sns.Message
+      break
     case 'aws:sqs':
-      message = m.body;
-      break;
+      message = m.body
+      break
     default:
-      message = 'unknown';
+      message = 'unknown'
   }
-  console.log(message);
-  if(message == 'unknown') return undefined;
+  console.log(message)
+  if (message == 'unknown') return undefined
   const sns = JSON.parse(message)
   const profileId = sns.profile_id
   if (sns.backfill) {
@@ -174,9 +174,9 @@ exports.handler = async (event, context) => {
         break
       default: // DO NOTHING
     }
-    const t = await ddb.scan({ TableName: configTable}).promise();
-    const wantedMasterBrands = t.Items.map(item => item.mid.S);
-    console.log('wantedMasterBrands', wantedMasterBrands);
+    const t = await ddb.scan({ TableName: configTable }).promise()
+    const wantedMasterBrands = t.Items.map(item => item.mid.S)
+    console.log('wantedMasterBrands', wantedMasterBrands)
     if (wantedMasterBrands.includes(masterBrand)) {
       console.log('wanted masterbrand')
       try {
@@ -190,4 +190,3 @@ exports.handler = async (event, context) => {
   }
   return undefined
 }
-
