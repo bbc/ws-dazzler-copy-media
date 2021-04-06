@@ -50,8 +50,7 @@ const transport = async (operation, s3Location, pid) => {
     case 'INSERT':
       try {
         const data = await msS3.headObject({ Bucket: destinationBucket, Key: key }).promise()
-        console.log('file exists, not overwriting', key)
-        console.log(data) // successful response
+        console.log('file exists, not overwriting', key, data.LastModified)
       } catch (e) {
         console.log('file does not exist, copying', key, e.code)
         var params = {
