@@ -53,8 +53,7 @@ const transport = async (operation, s3Location, pid) => {
         console.log('file exists, not overwriting', key)
         console.log(data) // successful response
       } catch (e) {
-        console.log('file does not exist, copying', key)
-        console.log(e)
+        console.log('file does not exist, copying', key, e.code)
         var params = {
           CopySource: s3Location,
           Bucket: destinationBucket,
