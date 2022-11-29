@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
-const uut = require('./index')
+const uut = require('./index');
 
-var event = {
+const event = {
   Records: [
     {
       EventSource: 'aws:sns',
@@ -24,12 +24,12 @@ var event = {
           'https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-6aad65c2f9911b05cd53efda11f913f9.pem',
         UnsubscribeUrl:
           'https://sns.eu-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82:01ea9877-bbbf-47af-a8eb-6d013f9f44ea',
-        MessageAttributes: {}
-      }
-    }
-  ]
-}
-var context = {
+        MessageAttributes: {},
+      },
+    },
+  ],
+};
+const context = {
   callbackWaitsForEmptyEventLoop: true,
   logGroupName:
     '/aws/lambda/MediaSyndicationApiNotificationsHandlerForPartners',
@@ -40,10 +40,10 @@ var context = {
   invokeid: '3191d65c-5040-4743-8826-0379b2b9059f',
   awsRequestId: '3191d65c-5040-4743-8826-0379b2b9059f',
   invokedFunctionArn:
-    'arn:aws:lambda:eu-west-1:205979497597:function:MediaSyndicationApiNotificationsHandlerForPartners'
-}
+    'arn:aws:lambda:eu-west-1:205979497597:function:MediaSyndicationApiNotificationsHandlerForPartners',
+};
 
 test('handler', async () => {
-  const r = await uut.handler(event, context)
-  expect(r).toBe(undefined)
-})
+  const r = await uut.handler(event, context);
+  expect(r).toBe(undefined);
+});
