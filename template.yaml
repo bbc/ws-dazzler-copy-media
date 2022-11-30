@@ -93,6 +93,8 @@ Resources:
             BucketName: !Ref InputBucket
         - S3CrudPolicy:
             BucketName: !Ref OutputBucket
+        - S3CrudPolicy:
+            BucketName: !Ref AudioOutputBucket
         - Statement:
             - Action: sts:AssumeRole
               Effect: Allow
@@ -112,7 +114,10 @@ Resources:
           APPW_KEY_PREFIX: !Ref APPWKeyPrefix
           APPW_ENV: !Ref Environment
           DDB_TABLE: !Ref DynamoDbTable
-          OUTPUT_BUCKET: !Ref OutputBucket
+          OUTPUT_BUCKET: !FindInMap
+            - OperationsMap
+            - AudioOutputBucketMap
+            - !Ref Environment
           EPISODE_PROFILE_ID: !Ref WantedEpisodeProfileId
           CLIP_PROFILE_ID: !Ref WantedClipProfileId
           COPY_TO: ""
@@ -173,7 +178,7 @@ Parameters:
     Default: arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
   WantedEpisodeProfileId:
     Type: String
-    Default: pips-map_id-av_pv13_pa4
+    Default: pips-map_id-a_od_p006
   WantedClipProfileId:
     Type: String
     Default: pips-map_id-av_pv10_pa4
@@ -181,11 +186,14 @@ Parameters:
     Type: String
     Description: media syndication API Key
   Brands:
-    Type: CommaDelimitedList
+    Type: String
     Default: p002vsn1
 Mappings:
   OperationsMap:
     OutputBucketMap:
+      test: ws-dazzler-assets-test
+      live: ws-dazzler-assets
+    AudioOutputBucketMap:
       test: test-ws-audio-assets
       live: live-ws-audio-assets
     MediaSyndicationTopicMap:
