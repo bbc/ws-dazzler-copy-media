@@ -121,6 +121,7 @@ Resources:
             - ESHostMap
             - !Ref Environment
           MS_API_KEY: !Ref MediaSyndicationApiKey
+          BRANDS: !Ref Brands
   AliasForLambda:
     Type: AWS::Lambda::Alias
     Properties:
@@ -179,11 +180,14 @@ Parameters:
   MediaSyndicationApiKey:
     Type: String
     Description: media syndication API Key
+  Brands:
+    Type: CommaDelimitedList
+    Default: p002vsn1
 Mappings:
   OperationsMap:
     OutputBucketMap:
-      test: ws-dazzler-assets-test
-      live: ws-dazzler-assets
+      test: test-ws-audio-assets
+      live: live-ws-audio-assets
     MediaSyndicationTopicMap:
       test: arn:aws:sns:eu-west-1:576677253489:test-ms-api
       live: arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82

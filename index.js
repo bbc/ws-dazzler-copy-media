@@ -44,7 +44,7 @@ if (process.env.MS_API_KEY) {
 const transport = async (operation, s3Uri, pid) => {
   console.log('transport', operation, s3Uri, pid);
   const s3Location = s3Uri.replace('s3:/', '');
-  const key = `${pid}.mp4`;
+  const key = `${pid}.mp3`;
   switch (operation) {
     case 'MODIFY':
     case 'INSERT':
@@ -155,11 +155,7 @@ async function wantedSeries(pid) {
 }
 
 async function wantedBrand(pid) {
-  if (pid === undefined) {
-    return false;
-  }
-  // TODO
-  return false;
+  return process.env.BRANDS.includes(pid);
 }
 
 async function wantedEpisode(profileId, pid) {
