@@ -218,6 +218,10 @@ async function handle(message) {
 
 exports.handler = async (event /* , context */) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
+  if (event?.source === 'uk.co.bbci.api.media-syndication') {
+    await handleMediaSyndication(event.detail.doc);
+    return undefined;
+  }
   await Promise.allSettled(event.Records.map((m) => {
     switch (m.eventSource || m.EventSource) {
       case 'aws:sns':
