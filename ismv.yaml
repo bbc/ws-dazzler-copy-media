@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: copy mp4 files between buckets when they become available
+Parameters:
+  Environment:
+    Default: test
+    Type: String
+    Description: The deployment environment
+    ConstraintDescription: must be test or live
+    AllowedValues:
+      - live
+      - test
+  LambdaTimeout:
+    Default: 30
+    Type: Number
+    Description: |-
+
+      The function execution time (in seconds) after which Lambda terminates
+
+      the function. 
+  LambdaMemorySize:
+    Default: 128
+    Type: Number
+    Description: 'The amount of memory, in MB, that is allocated to your Lambda function.'
+  APPWRole:
+    Default: 'arn:aws:iam::746161738563:role/client-access-appw-cd-live'
+    Type: String
+  APPWBucket:
+    Default: public-bf7ec4ef6829c416
+    Type: String
+  APPWKeyPrefix:
+    Default: programme_availability_cd/live
+    Type: String
+  InputBucket:
+    Type: String
+    Default: livemodavdistributionresources-distributionbucket-182btg2y28f33
+  MediaRole:
+    Type: String
+    Default: >-
+      arn:aws:iam::240129357028:role/LiveModavWspPublicStaticB-WspPublicStaticBucketAcc-L33J2E0BB6DT
+  WantedEpisodeProfileId:
+    Type: String
+    Default: pips-map_id-av_pv13_pa4
+  WantedClipProfileId:
+    Type: String
+    Default: pips-map_id-av_pv10_pa4
+  MediaSyndicationApiKey:
+    Type: String
+    Description: media syndication API Key
+Mappings:
+  OperationsMap:
+    OutputBucketMap:
+      test: childrens-dazzler
+      live: childrens-dazzler
+    MediaSyndicationTopicMap:
+      test: >-
+        arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+      live: >-
+        arn:aws:sns:eu-west-1:294595276257:LiveMsdrPercolatorWorldServicePartnersResources-NotificationsTopic-10ZP19CXN5F82
+Resources:
+  AliasForLambda:
+    Type: 'AWS::Lambda::Alias'
+    Properties:
+      FunctionVersion: $LATEST
+      FunctionName: !Ref Lambda
+      Name: !Ref Environment
+  Lambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        ZipFile: 'exports.handler = function(event,context){}'
+      Description: An Amazon SNS trigger that logs the message pushed to the SNS topic.
+      FunctionName: test-dazzler-copy-media
+      Handler: index.handler
+      MemorySize: !Ref LambdaMemorySize
+      Role: !GetAtt 
+        - LambdaRole
+        - Arn
+      Runtime: nodejs16.x
+      Timeout: !Ref LambdaTimeout
+      Environment:
+        Variables:
+          APPW_ROLE: !Ref APPWRole
+          MEDIA_ROLE: !Ref MediaRole
+          APPW_BUCKET: !Ref APPWBucket
+          APPW_KEY_PREFIX: !Ref APPWKeyPrefix
+          APPW_ENV: !Ref Environment
+          EPISODE_PROFILE_ID: !Ref WantedEpisodeProfileId
+          CLIP_PROFILE_ID: !Ref WantedClipProfileId
+          COPY_TO: ''
+          MS_API_KEY: !Ref MediaSyndicationApiKey
+      Tags:
+        - Key: 'lambda:createdBy'
+          Value: SAM
+  LambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: LambdaRolePolicy0
+          PolicyDocument:
+            Statement:
+              - Action: 'sts:AssumeRole'
+                Effect: Allow
+                Resource:
+                  - !Ref APPWRole
+                  - !Ref MediaRole
+      Tags:
+        - Key: 'lambda:createdBy'
+          Value: SAM
