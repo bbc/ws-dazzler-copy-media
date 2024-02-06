@@ -222,7 +222,7 @@ async function handle(message) {
 
 exports.handler = async (event /* , context */) => {
   // console.log("Received event:", JSON.stringify(event, null, 2));
-  if (process.env.OUTPUT_BUCKET.trim() === '') {
+  if ((process.env.OUTPUT_BUCKET?.trim() ?? '') === '') {
     return undefined;
   }
   await Promise.allSettled(event.Records.map((m) => {
